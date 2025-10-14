@@ -1,0 +1,83 @@
+# HƯỚNG DẪN ĐẦY ĐỦ CÀI ĐẶT VÀ SỬ DỤNG BLOCKCHAIN CHO CHỨNG CHỈ
+
+## Các lệnh cơ bản
+// Lấy địa chỉ contract sau khi deploy
+npx hardhat run scripts/deploy-certificate.js --network localhost 
+
+// Khởi chạy blockchain local và lấy tài khoản
+npx hardhat node
+
+// Deploy contract và tự động cập nhật địa chỉ
+npx hardhat run scripts/deploy-and-update.js --network localhost
+
+## CÁCH KHẮC PHỤC LỖI "ENS" VÀ CÀI ĐẶT METAMASK
+
+### BƯỚC 1: KHỞI ĐỘNG HARDHAT NODE
+Mở một terminal mới và chạy:
+```bash
+cd D:\BlockChainPJ\backend
+npx hardhat node
+```
+Giữ terminal này chạy và không được đóng lại
+
+### BƯỚC 2: DEPLOY LẠI CONTRACT
+Mở terminal mới và chạy:
+```bash
+cd D:\BlockChainPJ\backend
+npx hardhat run scripts/deploy-and-update.js --network localhost
+```
+Lưu ý địa chỉ contract được hiển thị, VD: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+
+### BƯỚC 3: KHỞI ĐỘNG LẠI BACKEND
+```bash
+cd D:\BlockChainPJ\backend
+npm run start:dev
+```
+Đợi backend khởi động hoàn tất và kiểm tra log không có lỗi
+
+### BƯỚC 4: CÀI ĐẶT METAMASK (Để theo dõi giao dịch blockchain)
+1. Cài đặt extension MetaMask cho trình duyệt
+2. Tạo tài khoản mới hoặc import tài khoản cũ
+3. Thêm mạng Hardhat Local với các thông tin:
+   - Tên mạng: Hardhat Local
+   - RPC URL: http://127.0.0.1:8545
+   - Chain ID: 31337
+   - Symbol: ETH
+   - Explorer URL: (để trống)
+4. Import một trong các private key từ terminal hardhat node, ví dụ:
+   Private Key đầu tiên: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+### BƯỚC 5: TEST LƯU CHỨNG CHỈ LÊN BLOCKCHAIN
+1. Đăng nhập vào hệ thống với tài khoản admin hoặc issuer
+2. Chọn chứng chỉ cần lưu lên blockchain
+3. Click nút "Lưu lên Blockchain"
+4. Kiểm tra thông báo và xác nhận thành công
+
+### KIỂM TRA METAMASK
+1. Sau khi lưu chứng chỉ, mở MetaMask
+2. Kiểm tra lịch sử giao dịch để xác nhận giao dịch đã thành công
+3. Lưu ý Transaction Hash để tra cứu sau này
+
+## XỬ LÝ CÁC LỖI THƯỜNG GẶP
+
+### Lỗi "network does not support ENS"
+- Lỗi này đã được khắc phục bằng cách cấu hình rõ ràng provider không sử dụng ENS
+- Nếu vẫn gặp lỗi, khởi động lại toàn bộ theo các bước trên
+
+### Lỗi "cannot estimate gas"
+- Nguyên nhân: Contract chưa được deploy hoặc địa chỉ sai
+- Giải pháp: Thực hiện lại Bước 2 (Deploy lại contract)
+
+### Lỗi "network not connected"
+- Nguyên nhân: Hardhat node không chạy hoặc đã dừng
+- Giải pháp: Kiểm tra terminal hardhat node, nếu không chạy thực hiện lại Bước 1
+
+### Lỗi "nonce too high"
+- Nguyên nhân: Trạng thái tài khoản không đồng bộ
+- Giải pháp: Reset tài khoản trong MetaMask (Settings > Advanced > Reset Account)
+
+### LƯU Ý QUAN TRỌNG
+1. Mỗi khi restart hardhat node, cần deploy lại contract (Bước 2)
+2. File certificate.address.ts sẽ tự động cập nhật sau khi chạy script deploy-and-update.js
+3. Kiểm tra log backend và hardhat node để xác định nguyên nhân khi gặp lỗi
+4. Địa chỉ contract có thể thay đổi sau mỗi lần deploy, luôn sử dụng địa chỉ mới nhất
