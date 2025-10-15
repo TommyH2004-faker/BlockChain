@@ -22,14 +22,20 @@ let CertificateController = class CertificateController {
         this.certificateService = certificateService;
     }
     async getAllCertificates(req) {
-        if (req.user.role === 'admin') {
-            return this.certificateService.findAll();
+        try {
+            console.log('Getting all certificates...');
+            if (req.user.role === 'admin') {
+                const certificates = await this.certificateService.findAll();
+                return certificates;
+            }
+            if (req.user.role === 'issuer') {
+                return await this.certificateService.findByIssuer(req.user.id);
+            }
+            return await this.certificateService.findByRecipient(req.user.id);
         }
-        else if (req.user.role === 'issuer') {
-            return this.certificateService.findByIssuer(req.user.userId);
-        }
-        else {
-            return this.certificateService.findByRecipient(req.user.userId);
+        catch (error) {
+            console.error('Error in getAllCertificates:', error);
+            return [];
         }
     }
     async getCertificateById(id) {

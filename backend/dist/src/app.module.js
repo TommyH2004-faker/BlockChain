@@ -10,12 +10,12 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const auth_module_1 = require("./modules/auth/auth.module");
-const certificate_module_1 = require("./modules/certificates/certificate.module");
 const blockchain_module_1 = require("./modules/blockchain/blockchain.module");
 const security_module_1 = require("./modules/security/security.module");
 const user_entity_1 = require("./common/entities/user.entity");
 const certificate_entity_1 = require("./common/entities/certificate.entity");
 const debug_controller_1 = require("./debug.controller");
+const certificate_module_1 = require("./modules/certificates/certificate.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;

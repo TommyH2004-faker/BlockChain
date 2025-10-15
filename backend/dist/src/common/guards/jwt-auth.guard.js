@@ -10,6 +10,23 @@ exports.JwtAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
+    canActivate(context) {
+        const req = context.switchToHttp().getRequest();
+        console.log('JWT Auth Guard - Headers:', req.headers);
+        console.log('JWT Auth Guard - Authorization Header:', req.headers.authorization);
+        return super.canActivate(context);
+    }
+    handleRequest(err, user, info, context) {
+        console.log('JWT Auth Guard - Handle Request Results:');
+        if (err) {
+            console.error('JWT Auth Error:', err.message);
+        }
+        if (info) {
+            console.error('JWT Auth Info:', info.message);
+        }
+        console.log('JWT Auth User:', user);
+        return super.handleRequest(err, user, info, context);
+    }
 };
 exports.JwtAuthGuard = JwtAuthGuard;
 exports.JwtAuthGuard = JwtAuthGuard = __decorate([

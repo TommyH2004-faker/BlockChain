@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CertificateController } from './certificate.controller';
+import { Certificate } from 'src/entities/certificate.entity';
+import { User } from 'src/entities/user.entity';
+import { CertificateOnChainService } from '../blockchain/certificate.onchain.service';
+
+
 import { CertificateService } from './certificate.service';
-import { BlockchainModule } from '../blockchain/blockchain.module';
-import { Certificate } from '../../common/entities/certificate.entity';
-import { User } from '../../common/entities/user.entity';
+import { CertificateController } from './certificate.controller';
+
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Certificate, User]),
-    BlockchainModule
-  ],
-  providers: [CertificateService],
+  imports: [TypeOrmModule.forFeature([Certificate, User])],
+  providers: [CertificateOnChainService, CertificateService],
   controllers: [CertificateController],
   exports: [CertificateService]
 })

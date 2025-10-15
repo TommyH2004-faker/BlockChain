@@ -10,18 +10,29 @@ export class CertificateController {
     private readonly certificateService: CertificateService
   ) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  async getAllCertificates(@Request() req) {
-    // Admin gets all certificates, issuers get only their issued certs, users get only their received certs
+
+@UseGuards(JwtAuthGuard)
+@Get()
+async getAllCertificates(@Request() req) {
+  try {
+    console.log('Getting all certificates...');
+    
     if (req.user.role === 'admin') {
-      return this.certificateService.findAll();
-    } else if (req.user.role === 'issuer') {
-      return this.certificateService.findByIssuer(req.user.userId);
-    } else {
-      return this.certificateService.findByRecipient(req.user.userId);
+      const certificates = await this.certificateService.findAll();
+      return certificates;
     }
+    
+    if (req.user.role === 'issuer') {
+      return await this.certificateService.findByIssuer(req.user.id);
+    }
+    
+    return await this.certificateService.findByRecipient(req.user.id);
+  } catch (error) {
+    console.error('Error in getAllCertificates:', error);
+    // Return empty array instead of failing
+    return [];
   }
+}
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')

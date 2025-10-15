@@ -28,16 +28,46 @@ export declare class CertificateService {
             issueDate: string;
             transactionHash: string;
             blockNumber: number;
+            status: string;
             verifiedAt: string;
+            certificateId?: undefined;
+            error?: undefined;
         } | {
-            issuer: any;
-            recipient: any;
-            title: any;
-            description: any;
-            issueDate: any;
+            issuer: string;
+            recipient: string;
+            title: string;
+            description: string;
+            issueDate: string;
+            transactionHash: string;
             verifiedAt: string;
+            blockNumber?: undefined;
+            status?: undefined;
+            certificateId?: undefined;
+            error?: undefined;
+        } | {
+            issuer: string;
+            recipient: string;
+            title: string;
+            description: string;
+            issueDate: string;
+            verifiedAt: string;
+            certificateId: string;
             transactionHash?: undefined;
             blockNumber?: undefined;
+            status?: undefined;
+            error?: undefined;
+        } | {
+            issuer: string;
+            recipient: string;
+            title: string;
+            description: string;
+            issueDate: string;
+            verifiedAt: string;
+            error: any;
+            transactionHash?: undefined;
+            blockNumber?: undefined;
+            status?: undefined;
+            certificateId?: undefined;
         };
         error?: undefined;
     } | {
@@ -57,7 +87,7 @@ export declare class CertificateService {
         certificateId: any;
         transactionHash: any;
     }>;
-    getBlockchainCertificate(certId: string): Promise<{
+    getBlockchainCertificate(txId: string): Promise<{
         issuer: string;
         recipient: string;
         title: string;
@@ -65,15 +95,45 @@ export declare class CertificateService {
         issueDate: string;
         transactionHash: string;
         blockNumber: number;
+        status: string;
         verifiedAt: string;
+        certificateId?: undefined;
+        error?: undefined;
     } | {
-        issuer: any;
-        recipient: any;
-        title: any;
-        description: any;
-        issueDate: any;
+        issuer: string;
+        recipient: string;
+        title: string;
+        description: string;
+        issueDate: string;
+        transactionHash: string;
         verifiedAt: string;
+        blockNumber?: undefined;
+        status?: undefined;
+        certificateId?: undefined;
+        error?: undefined;
+    } | {
+        issuer: string;
+        recipient: string;
+        title: string;
+        description: string;
+        issueDate: string;
+        verifiedAt: string;
+        certificateId: string;
         transactionHash?: undefined;
         blockNumber?: undefined;
+        status?: undefined;
+        error?: undefined;
+    } | {
+        issuer: string;
+        recipient: string;
+        title: string;
+        description: string;
+        issueDate: string;
+        verifiedAt: string;
+        error: any;
+        transactionHash?: undefined;
+        blockNumber?: undefined;
+        status?: undefined;
+        certificateId?: undefined;
     }>;
 }
