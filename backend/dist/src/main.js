@@ -11,7 +11,7 @@ async function bootstrap() {
         credentials: true
     });
     await app.listen(8080);
-    console.log('Server started on http://localhost:8080/api/v1');
+    console.log('Server started on http://localhost:8080');
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

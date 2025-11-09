@@ -24,37 +24,41 @@ __decorate([
     __metadata("design:type", String)
 ], Certificate.prototype, "title", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", String)
 ], Certificate.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Certificate.prototype, "issueDate", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
-], Certificate.prototype, "expiryDate", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Certificate.prototype, "grade", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Certificate.prototype, "type", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
 ], Certificate.prototype, "credentialID", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true, type: 'text' }),
+    (0, typeorm_1.Column)({ type: 'date' }),
+    __metadata("design:type", Date)
+], Certificate.prototype, "issueDate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'date', nullable: true }),
+    __metadata("design:type", Date)
+], Certificate.prototype, "expiryDate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Certificate.prototype, "grade", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Certificate.prototype, "type", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'longtext', nullable: true }),
     __metadata("design:type", String)
 ], Certificate.prototype, "image", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Certificate.prototype, "blockchainTxId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Certificate.prototype, "blockchainCertId", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
@@ -64,24 +68,28 @@ __decorate([
     __metadata("design:type", Date)
 ], Certificate.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, user => user.issuedCertificates),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Certificate.prototype, "issuerId", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Certificate.prototype, "recipientId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User),
     (0, typeorm_1.JoinColumn)({ name: 'issuerId' }),
     __metadata("design:type", user_entity_1.User)
 ], Certificate.prototype, "issuer", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Certificate.prototype, "issuerId", void 0);
+    __metadata("design:type", Boolean)
+], Certificate.prototype, "blockchainVerified", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, user => user.receivedCertificates),
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User),
     (0, typeorm_1.JoinColumn)({ name: 'recipientId' }),
     __metadata("design:type", user_entity_1.User)
 ], Certificate.prototype, "recipient", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Certificate.prototype, "recipientId", void 0);
 exports.Certificate = Certificate = __decorate([
-    (0, typeorm_1.Entity)()
+    (0, typeorm_1.Entity)('certificate')
 ], Certificate);
 //# sourceMappingURL=certificate.entity.js.map

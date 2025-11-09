@@ -57,50 +57,89 @@ export class AuthService {
     return null;
   }
 
-  async login(credentials: { username: string; password: string }) {
-    try {
-      // Check if user provided a username
-      if (!credentials.username) {
-        throw new UnauthorizedException('Username is required');
-      }
+  // async login(credentials: { username: string; password: string }) {
+  //   try {
+  //     // Check if user provided a username
+  //     if (!credentials.username) {
+  //       throw new UnauthorizedException('Username is required');
+  //     }
       
-      // Check if user provided a password
-      if (!credentials.password) {
-        throw new UnauthorizedException('Password is required');
-      }
+  //     // Check if user provided a password
+  //     if (!credentials.password) {
+  //       throw new UnauthorizedException('Password is required');
+  //     }
       
-      const user = await this.validateUser(credentials.username, credentials.password);
-      if (!user) {
-        // Check if the user exists with that username
-        const userExists = await this.userRepository.findOne({ 
-          where: [
-            { username: credentials.username },
-            { email: credentials.username }
-          ]
-        });
+  //     const user = await this.validateUser(credentials.username, credentials.password);
+  //     if (!user) {
+  //       // Check if the user exists with that username
+  //       const userExists = await this.userRepository.findOne({ 
+  //         where: [
+  //           { username: credentials.username },
+  //           { email: credentials.username }
+  //         ]
+  //       });
         
-        if (!userExists) {
-          throw new UnauthorizedException('User not found. Try "admin" with password "admin123"');
-        } else {
-          throw new UnauthorizedException('Invalid password');
-        }
-      }
+  //       if (!userExists) {
+  //         throw new UnauthorizedException('User not found. Try "admin" with password "admin123"');
+  //       } else {
+  //         throw new UnauthorizedException('Invalid password');
+  //       }
+  //     }
 
-      const payload = { username: user.username, sub: user.id, role: user.role };
-      return {
-        token: this.jwtService.sign(payload),
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        }
-      };
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+  //     const payload = { username: user.username, sub: user.id, role: user.role };
+  //     return {
+  //       token: this.jwtService.sign(payload),
+  //       user: {
+  //         id: user.id,
+  //         username: user.username,
+  //         email: user.email,
+  //         role: user.role,
+  //       }
+  //     };
+  //   } catch (error) {
+  //     console.error('Login error:', error);
+  //     throw error;
+  //   }
+  // }
+async login(credentials: { username: string; password: string }) {
+  try {
+    const user = await this.validateUser(credentials.username, credentials.password);
+    if (!user) {
+      const userExists = await this.userRepository.findOne({ 
+        where: [
+          { username: credentials.username },
+          { email: credentials.username }
+        ]
+      });
+      
+      if (!userExists) {
+        throw new UnauthorizedException('User not found');
+      } else {
+        throw new UnauthorizedException('Invalid password');
+      }
     }
+
+    // FIX: Đổi 'sub' thành 'userId' để match với jwt.strategy.ts
+    const payload = { 
+      username: user.username, 
+      userId: user.id,  // ĐỔI từ 'sub' thành 'userId'
+      role: user.role 
+    };
+    
+    return {
+      token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      }
+    };
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
   }
+}
 
   async register(userData: { username: string; password: string; email: string; role: 'admin' | 'issuer' | 'user' }) {
     // Check if username or email exists
@@ -125,13 +164,17 @@ export class AuthService {
 
     const savedUser = await this.userRepository.save(newUser);
     
-    const payload = { username: savedUser.username, sub: savedUser.id, role: savedUser.role };
-    const { password, ...userResult } = savedUser;
-    
-    return {
-      token: this.jwtService.sign(payload),
-      user: userResult,
-    };
+    const payload = { 
+    username: savedUser.username, 
+    userId: savedUser.id,  // ĐỔI từ 'sub' thành 'userId'
+    role: savedUser.role 
+  };
+  const { password, ...userResult } = savedUser;
+  
+  return {
+    token: this.jwtService.sign(payload),
+    user: userResult,
+  };
   }
 
   async getUserProfile(id: string) {

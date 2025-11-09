@@ -1,4 +1,3 @@
-import { User } from './user.entity';
 export declare class Certificate {
     id: number;
     title: string;

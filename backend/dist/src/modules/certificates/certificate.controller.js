@@ -23,51 +23,134 @@ let CertificateController = class CertificateController {
     }
     async getAllCertificates(req) {
         try {
-            console.log('Getting all certificates...');
+            console.log('Getting certificates for user:', {
+                userId: req.user.userId,
+                role: req.user.role
+            });
+            let certificates;
             if (req.user.role === 'admin') {
-                const certificates = await this.certificateService.findAll();
-                return certificates;
+                certificates = await this.certificateService.findAll();
             }
-            if (req.user.role === 'issuer') {
-                return await this.certificateService.findByIssuer(req.user.id);
+            else if (req.user.role === 'issuer') {
+                certificates = await this.certificateService.findByIssuer(req.user.userId);
             }
-            return await this.certificateService.findByRecipient(req.user.id);
+            else {
+                certificates = await this.certificateService.findByRecipient(req.user.userId);
+            }
+            console.log(`Found ${certificates.length} certificates`);
+            return certificates;
         }
         catch (error) {
-            console.error('Error in getAllCertificates:', error);
-            return [];
+            console.error('Error getting certificates:', error);
+            throw new common_1.BadRequestException(`Failed to get certificates: ${error.message}`);
+        }
+    }
+    async createTestCertificate(req) {
+        try {
+            console.log('Creating test certificate...');
+            const testCertificate = {
+                title: 'Test Certificate',
+                description: 'Test Description',
+                issuerId: req.user.userId,
+                recipientId: req.user.userId,
+                issueDate: new Date(),
+                credentialID: `TEST-${Date.now()}`
+            };
+            console.log('Test certificate data:', testCertificate);
+            const result = await this.certificateService.create(testCertificate);
+            console.log('Test certificate created:', result);
+            return result;
+        }
+        catch (error) {
+            console.error('Error creating test certificate:', error);
+            throw new common_1.BadRequestException(`Test failed: ${error.message}`);
         }
     }
     async getCertificateById(id) {
         return this.certificateService.findById(id);
     }
-    async verifyCertificate(credentialID) {
-        try {
-            const certificate = await this.certificateService.findByCredentialID(credentialID);
-            return this.certificateService.verifyCertificate(certificate);
-        }
-        catch (error) {
-            return {
-                verified: false,
-                error: 'Không tìm thấy chứng chỉ'
-            };
-        }
+    async verify(id) {
+        return this.certificateService.verifyCertificate(id);
     }
     async createCertificate(req, certificateData) {
-        if (req.user.role !== 'admin' && req.user.role !== 'issuer') {
-            throw new common_1.BadRequestException('Không có quyền tạo chứng chỉ');
+        try {
+            if (!certificateData.title) {
+                throw new common_1.BadRequestException('Title is required');
+            }
+            if (!certificateData.recipientId) {
+                throw new common_1.BadRequestException('Recipient ID is required');
+            }
+            const certificate = await this.certificateService.create({
+                ...certificateData,
+                issuerId: req.user.userId
+            });
+            return certificate;
         }
-        if (!certificateData.credentialID) {
-            certificateData.credentialID = `CERT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        catch (error) {
+            console.error('Create certificate error:', error);
+            throw new common_1.BadRequestException(`Failed to create certificate: ${error.message}`);
         }
-        return this.certificateService.create(certificateData, req.user.userId, certificateData.recipientId);
+    }
+    async getBlockchainCertificates() {
+        try {
+            console.log('Fetching all blockchain certificates...');
+            const certificates = await this.certificateService.getAllBlockchainCertificates();
+            console.log(`Found ${certificates.length} blockchain certificates`);
+            return certificates;
+        }
+        catch (error) {
+            console.error('Error fetching blockchain certificates:', error);
+            throw new common_1.BadRequestException(`Failed to fetch blockchain certificates: ${error.message}`);
+        }
+    }
+    async issueOnBlockchain(body) {
+        try {
+            console.log('Received blockchain issuance request for cert ID:', body.certId);
+            const certificate = await this.certificateService.findById(body.certId);
+            if (!certificate) {
+                throw new common_1.BadRequestException('Certificate not found');
+            }
+            if (!certificate.title || !certificate.description) {
+                throw new common_1.BadRequestException('Certificate must have title and description');
+            }
+            const result = await this.certificateService.issueOnBlockchain(body.certId);
+            if (!result || !result.certificateId) {
+                throw new common_1.BadRequestException('No certificate ID returned from blockchain');
+            }
+            console.log('Successfully issued certificate on blockchain:', result);
+            return {
+                success: true,
+                message: 'Certificate issued on blockchain successfully',
+                certificateId: result.certificateId,
+                transactionHash: result.transactionHash || result.certificateId
+            };
+        }
+        catch (error) {
+            console.error('Error issuing certificate on blockchain:', error);
+            throw new common_1.BadRequestException(`Failed to issue on blockchain: ${error.message}`);
+        }
     }
     async updateCertificate(req, id, certificateData) {
         const certificate = await this.certificateService.findById(id);
-        if (req.user.role !== 'admin' && certificate.issuerId !== req.user.userId) {
-            throw new common_1.BadRequestException('Không có quyền cập nhật chứng chỉ');
+        if (!certificate) {
+            throw new common_1.NotFoundException('Certificate not found');
         }
-        return this.certificateService.update(id, certificateData);
+        if (req.user.role !== 'admin' && certificate.issuerId !== req.user.userId) {
+            throw new common_1.ForbiddenException('Không có quyền cập nhật chứng chỉ');
+        }
+        delete certificateData.issuerId;
+        delete certificateData.recipientId;
+        delete certificateData.issuer;
+        delete certificateData.recipient;
+        delete certificateData.blockchainVerified;
+        delete certificateData.blockchainTxId;
+        delete certificateData.createdAt;
+        delete certificateData.updatedAt;
+        const updated = await this.certificateService.update(id, certificateData);
+        return {
+            message: 'Cập nhật thành công',
+            certificate: updated,
+        };
     }
     async deleteCertificate(req, id) {
         const certificate = await this.certificateService.findById(id);
@@ -93,27 +176,6 @@ let CertificateController = class CertificateController {
         }
         return this.certificateService.search(query);
     }
-    async issueOnBlockchain(body) {
-        try {
-            console.log('Received blockchain issuance request for cert ID:', body.certId);
-            const result = await this.certificateService.issueOnBlockchain(body.certId);
-            if (!result || !result.certificateId) {
-                console.error('No certificate ID returned from blockchain service');
-                throw new common_1.BadRequestException('Không nhận được ID giao dịch từ blockchain');
-            }
-            console.log('Successfully issued certificate on blockchain:', result);
-            return {
-                success: true,
-                message: 'Certificate issued on blockchain successfully',
-                certificateId: result.certificateId,
-                transactionHash: result.transactionHash || result.certificateId
-            };
-        }
-        catch (error) {
-            console.error('Error issuing certificate on blockchain:', error);
-            throw new common_1.BadRequestException(`Lỗi khi lưu chứng chỉ lên blockchain: ${error.message}`);
-        }
-    }
     async getBlockchainCertificate(txId) {
         try {
             const cert = await this.certificateService.getBlockchainCertificate(txId);
@@ -121,6 +183,43 @@ let CertificateController = class CertificateController {
         }
         catch (error) {
             throw new common_1.BadRequestException(`Lỗi khi lấy chứng chỉ từ blockchain: ${error.message}`);
+        }
+    }
+    async verifyCertificateByTx(txId, req) {
+        const user = req.user;
+        console.log(`[VERIFY] User ${user.username} (${user.role}) requested verification for txId: ${txId}`);
+        try {
+            const cert = await this.certificateService.findByBlockchainTxId(txId);
+            if (!cert) {
+                console.warn(`[VERIFY] Certificate not found for txId: ${txId}`);
+                throw new common_1.NotFoundException('Certificate not found');
+            }
+            if (user.role !== 'admin' && user.role !== 'issuer') {
+                console.warn(`[VERIFY] User ${user.username} (${user.role}) is not allowed to verify certificate ID ${cert.id}`);
+                throw new common_1.ForbiddenException('You are not allowed to verify this certificate');
+            }
+            if (cert.blockchainVerified) {
+                console.log(`[VERIFY] Certificate ID ${cert.id} already verified`);
+                return { certificate: cert, message: 'Certificate has already been verified', verified: true };
+            }
+            const issueDate = new Date(cert.issueDate);
+            const expiryDate = new Date(issueDate);
+            expiryDate.setFullYear(issueDate.getFullYear() + 5);
+            cert.blockchainVerified = true;
+            cert.expiryDate = expiryDate;
+            await this.certificateService.updateCertificate(cert.id, {
+                blockchainVerified: true,
+                expiryDate: cert.expiryDate,
+            });
+            console.log(`[VERIFY] Certificate ID ${cert.id} verified successfully`);
+            return { certificate: cert, message: 'Certificate successfully verified', verified: true };
+        }
+        catch (error) {
+            console.error(`[VERIFY] Error verifying certificate txId ${txId}:`, error);
+            if (error instanceof common_1.NotFoundException || error instanceof common_1.ForbiddenException) {
+                throw error;
+            }
+            throw new common_1.InternalServerErrorException('Failed to verify certificate');
         }
     }
 };
@@ -135,6 +234,14 @@ __decorate([
 ], CertificateController.prototype, "getAllCertificates", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('test'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CertificateController.prototype, "createTestCertificate", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -142,12 +249,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CertificateController.prototype, "getCertificateById", null);
 __decorate([
-    (0, common_1.Get)('verify/:credentialID'),
-    __param(0, (0, common_1.Param)('credentialID')),
+    (0, common_1.Get)('verify'),
+    __param(0, (0, common_1.Query)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], CertificateController.prototype, "verifyCertificate", null);
+], CertificateController.prototype, "verify", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(),
@@ -157,6 +264,21 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], CertificateController.prototype, "createCertificate", null);
+__decorate([
+    (0, common_1.Get)('blockchain'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CertificateController.prototype, "getBlockchainCertificates", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('blockchain/issue'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CertificateController.prototype, "issueOnBlockchain", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Put)(':id'),
@@ -196,20 +318,21 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CertificateController.prototype, "searchCertificates", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Post)('blockchain/issue'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], CertificateController.prototype, "issueOnBlockchain", null);
-__decorate([
     (0, common_1.Get)('blockchain/:txId'),
     __param(0, (0, common_1.Param)('txId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CertificateController.prototype, "getBlockchainCertificate", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('verify/blockchain/:txId'),
+    __param(0, (0, common_1.Param)('txId')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], CertificateController.prototype, "verifyCertificateByTx", null);
 exports.CertificateController = CertificateController = __decorate([
     (0, common_1.Controller)('certificates'),
     __metadata("design:paramtypes", [certificate_service_1.CertificateService])

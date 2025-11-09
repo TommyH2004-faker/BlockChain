@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Check if your contract looks like this:
 contract Certificate {
     struct CertificateData {
         address issuer;
@@ -9,51 +8,68 @@ contract Certificate {
         string title;
         string description;
         string issueDate;
+        bool isValid;
     }
-    
-    // Certificate storage
+
     mapping(uint256 => CertificateData) public certificates;
-    uint256 public certCount;
+    uint256 public certificateCount;
     
-    // Events
-    event CertificateIssued(uint256 certId, address indexed recipient, address indexed issuer);
-    
+    event CertificateIssued(
+        uint256 indexed certId,
+        address indexed issuer,
+        address indexed recipient,
+        string title
+    );
+
     function issueCertificate(
         address recipient,
         string memory title,
         string memory description,
         string memory issueDate
     ) public returns (uint256) {
-        uint256 certId = certCount;
-        certificates[certId] = CertificateData(
-            msg.sender,
-            recipient,
-            title,
-            description,
-            issueDate
-        );
-        certCount++;
-        
-        emit CertificateIssued(certId, recipient, msg.sender);
-        
+        require(bytes(title).length > 0, "Title cannot be empty");
+        require(recipient != address(0), "Invalid recipient address");
+
+        uint256 certId = certificateCount + 1;
+        certificates[certId] = CertificateData({
+            issuer: msg.sender,
+            recipient: recipient,
+            title: title,
+            description: description,
+            issueDate: issueDate,
+            isValid: true
+        });
+
+        certificateCount = certId;
+        emit CertificateIssued(certId, msg.sender, recipient, title);
         return certId;
     }
-    
+
     function getCertificate(uint256 certId) public view returns (
         address issuer,
         address recipient,
         string memory title,
         string memory description,
-        string memory issueDate
+        string memory issueDate,
+        bool isValid
     ) {
-        require(certId < certCount, "Certificate does not exist");
+        require(certId > 0 && certId <= certificateCount, "Certificate does not exist");
         CertificateData memory cert = certificates[certId];
         return (
             cert.issuer,
             cert.recipient,
             cert.title,
             cert.description,
-            cert.issueDate
+            cert.issueDate,
+            cert.isValid
         );
+    }
+
+    function getAllCertificates() public view returns (uint256[] memory) {
+        uint256[] memory certIds = new uint256[](certificateCount);
+        for(uint256 i = 0; i < certificateCount; i++) {
+            certIds[i] = i + 1;
+        }
+        return certIds;
     }
 }

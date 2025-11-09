@@ -114,11 +114,17 @@ let CertificateOnChainService = class CertificateOnChainService {
                 if (event.event === 'CertificateIssued' && event.args && event.args.certId) {
                     const certId = event.args.certId.toString();
                     console.log('Certificate successfully issued with ID:', certId);
-                    return certId;
+                    return {
+                        certificateId: certId,
+                        transactionHash: tx.hash
+                    };
                 }
             }
-            console.log('No certificate ID found in events, using transaction hash');
-            return tx.hash;
+            console.log('No certificate ID found in events, using transaction hash only');
+            return {
+                certificateId: null,
+                transactionHash: tx.hash
+            };
         }
         catch (error) {
             console.error('Blockchain issueCertificate error:', error);

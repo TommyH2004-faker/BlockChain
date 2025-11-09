@@ -1,7 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { Certificate } from './certificate.entity';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity()
+@Entity('user')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -15,19 +14,19 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'enum', enum: ['admin', 'issuer', 'user'] })
+  @Column({ 
+    type: 'enum', 
+    enum: ['admin', 'issuer', 'user'],
+    default: 'user' 
+  })
   role: 'admin' | 'issuer' | 'user';
+
+  @Column({ nullable: true })
+  blockchainAddress: string;  // THÊM trường này
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  // Relationships
-  @OneToMany(() => Certificate, certificate => certificate.issuer)
-  issuedCertificates: Certificate[];
-
-  @OneToMany(() => Certificate, certificate => certificate.recipient)
-  receivedCertificates: Certificate[];
 }

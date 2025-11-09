@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const typeorm_1 = require("typeorm");
-const certificate_entity_1 = require("./certificate.entity");
 let User = class User {
 };
 exports.User = User;
@@ -32,9 +31,17 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: ['admin', 'issuer', 'user'] }),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: ['admin', 'issuer', 'user'],
+        default: 'user'
+    }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "blockchainAddress", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
@@ -43,15 +50,7 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
 ], User.prototype, "updatedAt", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => certificate_entity_1.Certificate, certificate => certificate.issuer),
-    __metadata("design:type", Array)
-], User.prototype, "issuedCertificates", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => certificate_entity_1.Certificate, certificate => certificate.recipient),
-    __metadata("design:type", Array)
-], User.prototype, "receivedCertificates", void 0);
 exports.User = User = __decorate([
-    (0, typeorm_1.Entity)()
+    (0, typeorm_1.Entity)('user')
 ], User);
 //# sourceMappingURL=user.entity.js.map

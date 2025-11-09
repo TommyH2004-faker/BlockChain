@@ -29,24 +29,33 @@ import type {
 
 export interface CertificateInterface extends utils.Interface {
   functions: {
-    "certCount()": FunctionFragment;
+    "certificateCount()": FunctionFragment;
     "certificates(uint256)": FunctionFragment;
+    "getAllCertificates()": FunctionFragment;
     "getCertificate(uint256)": FunctionFragment;
     "issueCertificate(address,string,string,string)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "certCount"
+      | "certificateCount"
       | "certificates"
+      | "getAllCertificates"
       | "getCertificate"
       | "issueCertificate"
   ): FunctionFragment;
 
-  encodeFunctionData(functionFragment: "certCount", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "certificateCount",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "certificates",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAllCertificates",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getCertificate",
@@ -62,9 +71,16 @@ export interface CertificateInterface extends utils.Interface {
     ]
   ): string;
 
-  decodeFunctionResult(functionFragment: "certCount", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "certificateCount",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "certificates",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getAllCertificates",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -77,7 +93,7 @@ export interface CertificateInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "CertificateIssued(uint256,address,address)": EventFragment;
+    "CertificateIssued(uint256,address,address,string)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "CertificateIssued"): EventFragment;
@@ -85,11 +101,12 @@ export interface CertificateInterface extends utils.Interface {
 
 export interface CertificateIssuedEventObject {
   certId: BigNumber;
-  recipient: string;
   issuer: string;
+  recipient: string;
+  title: string;
 }
 export type CertificateIssuedEvent = TypedEvent<
-  [BigNumber, string, string],
+  [BigNumber, string, string, string],
   CertificateIssuedEventObject
 >;
 
@@ -123,31 +140,35 @@ export interface Certificate extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    certCount(overrides?: CallOverrides): Promise<[BigNumber]>;
+    certificateCount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     certificates(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string, string, string] & {
+      [string, string, string, string, string, boolean] & {
         issuer: string;
         recipient: string;
         title: string;
         description: string;
         issueDate: string;
+        isValid: boolean;
       }
     >;
+
+    getAllCertificates(overrides?: CallOverrides): Promise<[BigNumber[]]>;
 
     getCertificate(
       certId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string, string, string] & {
+      [string, string, string, string, string, boolean] & {
         issuer: string;
         recipient: string;
         title: string;
         description: string;
         issueDate: string;
+        isValid: boolean;
       }
     >;
 
@@ -160,31 +181,35 @@ export interface Certificate extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  certCount(overrides?: CallOverrides): Promise<BigNumber>;
+  certificateCount(overrides?: CallOverrides): Promise<BigNumber>;
 
   certificates(
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
-    [string, string, string, string, string] & {
+    [string, string, string, string, string, boolean] & {
       issuer: string;
       recipient: string;
       title: string;
       description: string;
       issueDate: string;
+      isValid: boolean;
     }
   >;
+
+  getAllCertificates(overrides?: CallOverrides): Promise<BigNumber[]>;
 
   getCertificate(
     certId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
-    [string, string, string, string, string] & {
+    [string, string, string, string, string, boolean] & {
       issuer: string;
       recipient: string;
       title: string;
       description: string;
       issueDate: string;
+      isValid: boolean;
     }
   >;
 
@@ -197,31 +222,35 @@ export interface Certificate extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    certCount(overrides?: CallOverrides): Promise<BigNumber>;
+    certificateCount(overrides?: CallOverrides): Promise<BigNumber>;
 
     certificates(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string, string, string] & {
+      [string, string, string, string, string, boolean] & {
         issuer: string;
         recipient: string;
         title: string;
         description: string;
         issueDate: string;
+        isValid: boolean;
       }
     >;
+
+    getAllCertificates(overrides?: CallOverrides): Promise<BigNumber[]>;
 
     getCertificate(
       certId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string, string, string] & {
+      [string, string, string, string, string, boolean] & {
         issuer: string;
         recipient: string;
         title: string;
         description: string;
         issueDate: string;
+        isValid: boolean;
       }
     >;
 
@@ -235,25 +264,29 @@ export interface Certificate extends BaseContract {
   };
 
   filters: {
-    "CertificateIssued(uint256,address,address)"(
-      certId?: null,
+    "CertificateIssued(uint256,address,address,string)"(
+      certId?: PromiseOrValue<BigNumberish> | null,
+      issuer?: PromiseOrValue<string> | null,
       recipient?: PromiseOrValue<string> | null,
-      issuer?: PromiseOrValue<string> | null
+      title?: null
     ): CertificateIssuedEventFilter;
     CertificateIssued(
-      certId?: null,
+      certId?: PromiseOrValue<BigNumberish> | null,
+      issuer?: PromiseOrValue<string> | null,
       recipient?: PromiseOrValue<string> | null,
-      issuer?: PromiseOrValue<string> | null
+      title?: null
     ): CertificateIssuedEventFilter;
   };
 
   estimateGas: {
-    certCount(overrides?: CallOverrides): Promise<BigNumber>;
+    certificateCount(overrides?: CallOverrides): Promise<BigNumber>;
 
     certificates(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getAllCertificates(overrides?: CallOverrides): Promise<BigNumber>;
 
     getCertificate(
       certId: PromiseOrValue<BigNumberish>,
@@ -270,10 +303,14 @@ export interface Certificate extends BaseContract {
   };
 
   populateTransaction: {
-    certCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    certificateCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     certificates(
       arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getAllCertificates(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

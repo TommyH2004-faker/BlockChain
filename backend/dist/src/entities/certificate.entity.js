@@ -8,10 +8,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Certificate = void 0;
 const typeorm_1 = require("typeorm");
-const user_entity_1 = require("./user.entity");
 let Certificate = class Certificate {
 };
 exports.Certificate = Certificate;
@@ -68,24 +68,24 @@ __decorate([
     __metadata("design:type", Date)
 ], Certificate.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, user => user.issuedCertificates),
+    (0, typeorm_1.ManyToOne)(() => User, user => user.issuedCertificates),
     (0, typeorm_1.JoinColumn)({ name: 'issuerId' }),
-    __metadata("design:type", user_entity_1.User)
+    __metadata("design:type", typeof (_a = typeof User !== "undefined" && User) === "function" ? _a : Object)
 ], Certificate.prototype, "issuer", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Certificate.prototype, "issuerId", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, user => user.receivedCertificates),
+    (0, typeorm_1.ManyToOne)(() => User, user => user.receivedCertificates),
     (0, typeorm_1.JoinColumn)({ name: 'recipientId' }),
-    __metadata("design:type", user_entity_1.User)
+    __metadata("design:type", typeof (_b = typeof User !== "undefined" && User) === "function" ? _b : Object)
 ], Certificate.prototype, "recipient", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Certificate.prototype, "recipientId", void 0);
 exports.Certificate = Certificate = __decorate([
-    (0, typeorm_1.Entity)()
+    (0, typeorm_1.Entity)('certificate')
 ], Certificate);
 //# sourceMappingURL=certificate.entity.js.map

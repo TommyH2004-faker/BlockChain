@@ -108,20 +108,30 @@ export class CertificateOnChainService {
         console.log('No events found in transaction receipt, using transaction hash as certificate ID');
         return tx.hash;
       }
-      
-      // Tìm event có tên CertificateIssued
+            // Tìm event có tên CertificateIssued
       for (const event of receipt.events) {
         console.log('Event:', event.event, event.args);
         if (event.event === 'CertificateIssued' && event.args && event.args.certId) {
           const certId = event.args.certId.toString();
           console.log('Certificate successfully issued with ID:', certId);
-          return certId;
+          return {
+            certificateId: certId,
+            transactionHash: tx.hash
+          };
         }
       }
+
+      // Fallback nếu không có event
+      console.log('No certificate ID found in events, using transaction hash only');
+      return {
+        certificateId: null,
+        transactionHash: tx.hash
+      };
+
       
-      // Fallback to transaction hash
-      console.log('No certificate ID found in events, using transaction hash');
-      return tx.hash;
+
+
+
     } catch (error) {
       console.error('Blockchain issueCertificate error:', error);
       throw new Error(`Blockchain error: ${error.message}`);

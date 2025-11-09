@@ -31,10 +31,9 @@ export declare class AuthService {
             username: string;
             email: string;
             role: "admin" | "issuer" | "user";
+            blockchainAddress: string;
             createdAt: Date;
             updatedAt: Date;
-            issuedCertificates: import("../../common/entities/certificate.entity").Certificate[];
-            receivedCertificates: import("../../common/entities/certificate.entity").Certificate[];
         };
     }>;
     getUserProfile(id: string): Promise<{
@@ -42,30 +41,27 @@ export declare class AuthService {
         username: string;
         email: string;
         role: "admin" | "issuer" | "user";
+        blockchainAddress: string;
         createdAt: Date;
         updatedAt: Date;
-        issuedCertificates: import("../../common/entities/certificate.entity").Certificate[];
-        receivedCertificates: import("../../common/entities/certificate.entity").Certificate[];
     }>;
     getAllUsers(): Promise<{
         id: string;
         username: string;
         email: string;
         role: "admin" | "issuer" | "user";
+        blockchainAddress: string;
         createdAt: Date;
         updatedAt: Date;
-        issuedCertificates: import("../../common/entities/certificate.entity").Certificate[];
-        receivedCertificates: import("../../common/entities/certificate.entity").Certificate[];
     }[]>;
     updateUserProfile(id: string, userData: Partial<User>): Promise<{
         id: string;
         username: string;
         email: string;
         role: "admin" | "issuer" | "user";
+        blockchainAddress: string;
         createdAt: Date;
         updatedAt: Date;
-        issuedCertificates: import("../../common/entities/certificate.entity").Certificate[];
-        receivedCertificates: import("../../common/entities/certificate.entity").Certificate[];
     }>;
     deleteUser(id: string): Promise<void>;
 }

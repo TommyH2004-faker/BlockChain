@@ -4,14 +4,16 @@ import type { Listener, Provider } from "@ethersproject/providers";
 import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from "./common";
 export interface CertificateInterface extends utils.Interface {
     functions: {
-        "certCount()": FunctionFragment;
+        "certificateCount()": FunctionFragment;
         "certificates(uint256)": FunctionFragment;
+        "getAllCertificates()": FunctionFragment;
         "getCertificate(uint256)": FunctionFragment;
         "issueCertificate(address,string,string,string)": FunctionFragment;
     };
-    getFunction(nameOrSignatureOrTopic: "certCount" | "certificates" | "getCertificate" | "issueCertificate"): FunctionFragment;
-    encodeFunctionData(functionFragment: "certCount", values?: undefined): string;
+    getFunction(nameOrSignatureOrTopic: "certificateCount" | "certificates" | "getAllCertificates" | "getCertificate" | "issueCertificate"): FunctionFragment;
+    encodeFunctionData(functionFragment: "certificateCount", values?: undefined): string;
     encodeFunctionData(functionFragment: "certificates", values: [PromiseOrValue<BigNumberish>]): string;
+    encodeFunctionData(functionFragment: "getAllCertificates", values?: undefined): string;
     encodeFunctionData(functionFragment: "getCertificate", values: [PromiseOrValue<BigNumberish>]): string;
     encodeFunctionData(functionFragment: "issueCertificate", values: [
         PromiseOrValue<string>,
@@ -19,22 +21,25 @@ export interface CertificateInterface extends utils.Interface {
         PromiseOrValue<string>,
         PromiseOrValue<string>
     ]): string;
-    decodeFunctionResult(functionFragment: "certCount", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "certificateCount", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "certificates", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getAllCertificates", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getCertificate", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "issueCertificate", data: BytesLike): Result;
     events: {
-        "CertificateIssued(uint256,address,address)": EventFragment;
+        "CertificateIssued(uint256,address,address,string)": EventFragment;
     };
     getEvent(nameOrSignatureOrTopic: "CertificateIssued"): EventFragment;
 }
 export interface CertificateIssuedEventObject {
     certId: BigNumber;
-    recipient: string;
     issuer: string;
+    recipient: string;
+    title: string;
 }
 export type CertificateIssuedEvent = TypedEvent<[
     BigNumber,
+    string,
     string,
     string
 ], CertificateIssuedEventObject>;
@@ -54,112 +59,129 @@ export interface Certificate extends BaseContract {
     once: OnEvent<this>;
     removeListener: OnEvent<this>;
     functions: {
-        certCount(overrides?: CallOverrides): Promise<[BigNumber]>;
+        certificateCount(overrides?: CallOverrides): Promise<[BigNumber]>;
         certificates(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
             string,
             string,
             string,
             string,
-            string
+            string,
+            boolean
         ] & {
             issuer: string;
             recipient: string;
             title: string;
             description: string;
             issueDate: string;
+            isValid: boolean;
         }>;
+        getAllCertificates(overrides?: CallOverrides): Promise<[BigNumber[]]>;
         getCertificate(certId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
             string,
             string,
             string,
             string,
-            string
+            string,
+            boolean
         ] & {
             issuer: string;
             recipient: string;
             title: string;
             description: string;
             issueDate: string;
+            isValid: boolean;
         }>;
         issueCertificate(recipient: PromiseOrValue<string>, title: PromiseOrValue<string>, description: PromiseOrValue<string>, issueDate: PromiseOrValue<string>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
     };
-    certCount(overrides?: CallOverrides): Promise<BigNumber>;
+    certificateCount(overrides?: CallOverrides): Promise<BigNumber>;
     certificates(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
         string,
         string,
         string,
         string,
-        string
+        string,
+        boolean
     ] & {
         issuer: string;
         recipient: string;
         title: string;
         description: string;
         issueDate: string;
+        isValid: boolean;
     }>;
+    getAllCertificates(overrides?: CallOverrides): Promise<BigNumber[]>;
     getCertificate(certId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
         string,
         string,
         string,
         string,
-        string
+        string,
+        boolean
     ] & {
         issuer: string;
         recipient: string;
         title: string;
         description: string;
         issueDate: string;
+        isValid: boolean;
     }>;
     issueCertificate(recipient: PromiseOrValue<string>, title: PromiseOrValue<string>, description: PromiseOrValue<string>, issueDate: PromiseOrValue<string>, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
     callStatic: {
-        certCount(overrides?: CallOverrides): Promise<BigNumber>;
+        certificateCount(overrides?: CallOverrides): Promise<BigNumber>;
         certificates(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
             string,
             string,
             string,
             string,
-            string
+            string,
+            boolean
         ] & {
             issuer: string;
             recipient: string;
             title: string;
             description: string;
             issueDate: string;
+            isValid: boolean;
         }>;
+        getAllCertificates(overrides?: CallOverrides): Promise<BigNumber[]>;
         getCertificate(certId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
             string,
             string,
             string,
             string,
-            string
+            string,
+            boolean
         ] & {
             issuer: string;
             recipient: string;
             title: string;
             description: string;
             issueDate: string;
+            isValid: boolean;
         }>;
         issueCertificate(recipient: PromiseOrValue<string>, title: PromiseOrValue<string>, description: PromiseOrValue<string>, issueDate: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
     };
     filters: {
-        "CertificateIssued(uint256,address,address)"(certId?: null, recipient?: PromiseOrValue<string> | null, issuer?: PromiseOrValue<string> | null): CertificateIssuedEventFilter;
-        CertificateIssued(certId?: null, recipient?: PromiseOrValue<string> | null, issuer?: PromiseOrValue<string> | null): CertificateIssuedEventFilter;
+        "CertificateIssued(uint256,address,address,string)"(certId?: PromiseOrValue<BigNumberish> | null, issuer?: PromiseOrValue<string> | null, recipient?: PromiseOrValue<string> | null, title?: null): CertificateIssuedEventFilter;
+        CertificateIssued(certId?: PromiseOrValue<BigNumberish> | null, issuer?: PromiseOrValue<string> | null, recipient?: PromiseOrValue<string> | null, title?: null): CertificateIssuedEventFilter;
     };
     estimateGas: {
-        certCount(overrides?: CallOverrides): Promise<BigNumber>;
+        certificateCount(overrides?: CallOverrides): Promise<BigNumber>;
         certificates(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
+        getAllCertificates(overrides?: CallOverrides): Promise<BigNumber>;
         getCertificate(certId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
         issueCertificate(recipient: PromiseOrValue<string>, title: PromiseOrValue<string>, description: PromiseOrValue<string>, issueDate: PromiseOrValue<string>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
     };
     populateTransaction: {
-        certCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        certificateCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         certificates(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getAllCertificates(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getCertificate(certId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         issueCertificate(recipient: PromiseOrValue<string>, title: PromiseOrValue<string>, description: PromiseOrValue<string>, issueDate: PromiseOrValue<string>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;

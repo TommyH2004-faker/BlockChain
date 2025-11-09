@@ -27,13 +27,29 @@ let CertificateService = class CertificateService {
     }
     async findAll() {
         try {
-            return await this.certificateRepository.find({
+            console.log('Attempting to fetch all certificates from database...');
+            if (!this.certificateRepository) {
+                console.error('Certificate repository is not properly injected');
+                throw new Error('Database connection error');
+            }
+            const certificates = await this.certificateRepository.find({
                 relations: ['issuer', 'recipient']
             });
+            console.log('Database query result:', {
+                success: true,
+                count: certificates.length,
+                certificates: certificates.map(c => ({
+                    id: c.id,
+                    title: c.title,
+                    issuerId: c.issuerId,
+                    recipientId: c.recipientId
+                }))
+            });
+            return certificates;
         }
         catch (error) {
-            console.error('Error finding all certificates:', error);
-            return [];
+            console.error('Error in findAll certificates:', error);
+            throw new Error(`Database error: ${error.message}`);
         }
     }
     async findByIssuer(issuerId) {
@@ -68,26 +84,15 @@ let CertificateService = class CertificateService {
         }
         return certificate;
     }
-    async create(certificateData, issuerId, recipientId) {
-        const issuer = await this.userRepository.findOneBy({ id: issuerId });
-        const recipient = await this.userRepository.findOneBy({ id: recipientId });
-        if (!issuer || !recipient) {
-            throw new common_1.NotFoundException('Issuer or recipient not found');
-        }
-        let blockchainTxId = null;
+    async create(certificateData) {
         try {
-            blockchainTxId = await this.certificateOnChainService.issueCertificate(recipient.username, certificateData.title, certificateData.description, certificateData.issueDate);
+            const certificate = this.certificateRepository.create(certificateData);
+            return await this.certificateRepository.save(certificate);
         }
         catch (error) {
-            console.error('Failed to issue certificate on blockchain:', error);
+            console.error('Error creating certificate:', error);
+            throw new common_1.BadRequestException(`Database error: ${error.message}`);
         }
-        const newCertificate = this.certificateRepository.create({
-            ...certificateData,
-            issuerId,
-            recipientId,
-            blockchainTxId,
-        });
-        return this.certificateRepository.save(newCertificate);
     }
     async update(id, certificateData) {
         await this.findById(id);
@@ -113,29 +118,6 @@ let CertificateService = class CertificateService {
             .orWhere('certificate.credentialID LIKE :query', { query: `%${query}%` })
             .getMany();
     }
-    async verifyCertificate(certificate) {
-        if (certificate.blockchainTxId) {
-            try {
-                const onchainData = await this.certificateOnChainService.getCertificate(certificate.blockchainTxId);
-                return {
-                    certificate,
-                    verified: true,
-                    blockchainData: onchainData
-                };
-            }
-            catch (error) {
-                return {
-                    certificate,
-                    verified: false,
-                    error: 'Không thể xác minh trên blockchain'
-                };
-            }
-        }
-        return {
-            certificate,
-            verified: true
-        };
-    }
     async issueOnBlockchain(certId) {
         try {
             console.log(`Processing blockchain issuance for certificate ${certId}`);
@@ -143,28 +125,80 @@ let CertificateService = class CertificateService {
             if (!certificate) {
                 throw new Error(`Certificate with ID ${certId} not found`);
             }
-            console.log(`Found certificate: ${certificate.title}`);
             const issueDate = certificate.issueDate
                 ? new Date(certificate.issueDate).toISOString().split('T')[0]
                 : new Date().toISOString().split('T')[0];
-            const blockchainId = await this.certificateOnChainService.issueCertificate(certificate.recipient?.username || 'unknown-recipient', certificate.title, certificate.description || '', issueDate);
-            if (!blockchainId) {
-                throw new Error('No blockchain ID returned from transaction');
-            }
-            console.log(`Certificate issued on blockchain with ID: ${blockchainId}`);
+            const blockchainResponse = await this.certificateOnChainService.issueCertificate(certificate.recipient?.username || 'unknown-recipient', certificate.title, certificate.description || '', issueDate);
+            const txHash = typeof blockchainResponse === 'string'
+                ? blockchainResponse
+                : blockchainResponse.transactionHash;
+            if (!txHash)
+                throw new Error('Blockchain transaction hash not found');
+            console.log(`✅ Certificate issued on blockchain with txHash: ${txHash}`);
             await this.certificateRepository.update(certId, {
-                blockchainTxId: blockchainId
+                blockchainTxId: txHash,
             });
             return {
                 success: true,
                 message: 'Certificate issued on blockchain successfully',
-                certificateId: blockchainId,
-                transactionHash: blockchainId
+                certificateId: certId,
+                transactionHash: txHash,
             };
         }
         catch (error) {
-            console.error(`Error issuing certificate ${certId} on blockchain:`, error);
-            throw error;
+            console.error(`❌ Error issuing certificate ${certId} on blockchain:`, error);
+            throw new Error(`Lỗi blockchain: Failed to issue on blockchain: ${error.message}`);
+        }
+    }
+    async getAllBlockchainCertificates() {
+        try {
+            const certificates = await this.certificateRepository.find({
+                where: {
+                    blockchainTxId: (0, typeorm_2.Not)((0, typeorm_2.IsNull)())
+                },
+                relations: ['issuer', 'recipient']
+            });
+            const blockchainCertificates = await Promise.all(certificates.map(async (cert) => {
+                try {
+                    const blockchainData = await this.certificateOnChainService.getCertificate(cert.blockchainTxId);
+                    return {
+                        id: cert.id,
+                        title: cert.title,
+                        description: cert.description,
+                        issueDate: cert.issueDate,
+                        issuer: {
+                            id: cert.issuer.id,
+                            username: cert.issuer.username,
+                            blockchainAddress: blockchainData.issuer
+                        },
+                        recipient: {
+                            id: cert.recipient.id,
+                            username: cert.recipient.username,
+                            blockchainAddress: blockchainData.recipient
+                        },
+                        blockchainTxId: cert.blockchainTxId,
+                        blockchainData: {
+                            status: blockchainData.status || 'VERIFIED',
+                            issueDate: blockchainData.issueDate,
+                            title: blockchainData.title,
+                            transactionHash: blockchainData.transactionHash,
+                            blockNumber: blockchainData.blockNumber
+                        }
+                    };
+                }
+                catch (error) {
+                    console.error(`Error fetching blockchain data for certificate ${cert.id}:`, error);
+                    return {
+                        ...cert,
+                        blockchainError: error.message
+                    };
+                }
+            }));
+            return blockchainCertificates;
+        }
+        catch (error) {
+            console.error('Error in getAllBlockchainCertificates:', error);
+            throw new Error(`Failed to fetch blockchain certificates: ${error.message}`);
         }
     }
     async getBlockchainCertificate(txId) {
@@ -184,6 +218,31 @@ let CertificateService = class CertificateService {
                 error: error.message
             };
         }
+    }
+    async verifyCertificate(certIdOrTx) {
+        const cert = await this.certificateRepository.findOne({
+            where: [
+                { credentialID: certIdOrTx },
+                { blockchainTxId: certIdOrTx },
+            ],
+        });
+        if (!cert)
+            return { verified: false };
+        return {
+            verified: true,
+            data: cert,
+        };
+    }
+    async findByBlockchainTxId(txId) {
+        return this.certificateRepository.findOne({ where: { blockchainTxId: txId } });
+    }
+    async updateCertificate(id, updateData) {
+        const cert = await this.findById(id);
+        if (!cert) {
+            throw new common_1.NotFoundException(`Certificate with id ${id} not found`);
+        }
+        const updatedCert = this.certificateRepository.merge(cert, updateData);
+        return this.certificateRepository.save(updatedCert);
     }
 };
 exports.CertificateService = CertificateService;

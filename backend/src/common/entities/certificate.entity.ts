@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 
-@Entity()
+@Entity('certificate')
 export class Certificate {
   @PrimaryGeneratedColumn()
   id: number;
@@ -9,29 +9,32 @@ export class Certificate {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column()
-  issueDate: string;
-
-  @Column({ nullable: true })
-  expiryDate: string;
-
-  @Column()
-  grade: string;
-
-  @Column()
-  type: string;
-
-  @Column()
+  @Column({ unique: true })
   credentialID: string;
 
-  @Column({ nullable: true, type: 'text' })
+  @Column({ type: 'date' })
+  issueDate: Date;
+
+  @Column({ type: 'date', nullable: true })
+  expiryDate: Date;
+
+  @Column({ nullable: true })
+  grade: string;
+
+  @Column({ nullable: true })
+  type: string;
+
+  @Column({ type: 'longtext', nullable: true })
   image: string;
 
   @Column({ nullable: true })
   blockchainTxId: string;
+
+  @Column({ nullable: true })
+  blockchainCertId: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -39,18 +42,18 @@ export class Certificate {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Relationships
-  @ManyToOne(() => User, user => user.issuedCertificates)
-  @JoinColumn({ name: 'issuerId' })
-  issuer: User;
-
   @Column()
   issuerId: string;
 
-  @ManyToOne(() => User, user => user.receivedCertificates)
-  @JoinColumn({ name: 'recipientId' })
-  recipient: User;
-
   @Column()
   recipientId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'issuerId' })
+  issuer: User;
+  @Column()
+  blockchainVerified: boolean;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'recipientId' })
+  recipient: User;
 }

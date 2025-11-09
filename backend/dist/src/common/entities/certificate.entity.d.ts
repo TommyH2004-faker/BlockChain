@@ -3,17 +3,19 @@ export declare class Certificate {
     id: number;
     title: string;
     description: string;
-    issueDate: string;
-    expiryDate: string;
+    credentialID: string;
+    issueDate: Date;
+    expiryDate: Date;
     grade: string;
     type: string;
-    credentialID: string;
     image: string;
     blockchainTxId: string;
+    blockchainCertId: string;
     createdAt: Date;
     updatedAt: Date;
-    issuer: User;
     issuerId: string;
-    recipient: User;
     recipientId: string;
+    issuer: User;
+    blockchainVerified: boolean;
+    recipient: User;
 }

@@ -94,12 +94,6 @@ let AuthService = class AuthService {
     }
     async login(credentials) {
         try {
-            if (!credentials.username) {
-                throw new common_1.UnauthorizedException('Username is required');
-            }
-            if (!credentials.password) {
-                throw new common_1.UnauthorizedException('Password is required');
-            }
             const user = await this.validateUser(credentials.username, credentials.password);
             if (!user) {
                 const userExists = await this.userRepository.findOne({
@@ -109,13 +103,17 @@ let AuthService = class AuthService {
                     ]
                 });
                 if (!userExists) {
-                    throw new common_1.UnauthorizedException('User not found. Try "admin" with password "admin123"');
+                    throw new common_1.UnauthorizedException('User not found');
                 }
                 else {
                     throw new common_1.UnauthorizedException('Invalid password');
                 }
             }
-            const payload = { username: user.username, sub: user.id, role: user.role };
+            const payload = {
+                username: user.username,
+                userId: user.id,
+                role: user.role
+            };
             return {
                 token: this.jwtService.sign(payload),
                 user: {
@@ -146,7 +144,11 @@ let AuthService = class AuthService {
             role: userData.role,
         });
         const savedUser = await this.userRepository.save(newUser);
-        const payload = { username: savedUser.username, sub: savedUser.id, role: savedUser.role };
+        const payload = {
+            username: savedUser.username,
+            userId: savedUser.id,
+            role: savedUser.role
+        };
         const { password, ...userResult } = savedUser;
         return {
             token: this.jwtService.sign(payload),

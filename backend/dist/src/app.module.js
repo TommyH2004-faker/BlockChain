@@ -16,6 +16,7 @@ const user_entity_1 = require("./common/entities/user.entity");
 const certificate_entity_1 = require("./common/entities/certificate.entity");
 const debug_controller_1 = require("./debug.controller");
 const certificate_module_1 = require("./modules/certificates/certificate.module");
+const user_module_1 = require("./modules/user/user.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -35,7 +36,8 @@ exports.AppModule = AppModule = __decorate([
             security_module_1.SecurityModule,
             auth_module_1.AuthModule,
             certificate_module_1.CertificateModule,
-            blockchain_module_1.BlockchainModule
+            blockchain_module_1.BlockchainModule,
+            user_module_1.UsersModule
         ],
         controllers: [debug_controller_1.DebugController],
     })

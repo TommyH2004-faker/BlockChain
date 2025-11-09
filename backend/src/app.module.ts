@@ -9,6 +9,9 @@ import { Certificate } from './common/entities/certificate.entity';
 import { DataSource } from 'typeorm/data-source/DataSource';
 import { DebugController } from './debug.controller';
 import { CertificateModule } from './modules/certificates/certificate.module';
+import { UsersModule } from './modules/user/user.module';
+
+
 
 @Module({
   imports: [
@@ -25,7 +28,8 @@ import { CertificateModule } from './modules/certificates/certificate.module';
     SecurityModule,
     AuthModule,
     CertificateModule,
-    BlockchainModule
+    BlockchainModule,
+    UsersModule
   ],
   controllers: [DebugController],
 })

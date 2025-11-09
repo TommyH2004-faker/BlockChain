@@ -12,81 +12,62 @@ export declare class CertificateService {
     findByRecipient(recipientId: string): Promise<Certificate[]>;
     findById(id: number): Promise<Certificate>;
     findByCredentialID(credentialID: string): Promise<Certificate>;
-    create(certificateData: any, issuerId: string, recipientId: string): Promise<Certificate>;
+    create(certificateData: Partial<Certificate>): Promise<Certificate>;
     update(id: number, certificateData: Partial<Certificate>): Promise<Certificate>;
     updateImage(id: number, imageUrl: string): Promise<Certificate>;
     remove(id: number): Promise<void>;
     search(query: string): Promise<Certificate[]>;
-    verifyCertificate(certificate: Certificate): Promise<{
-        certificate: Certificate;
-        verified: boolean;
-        blockchainData: {
-            issuer: string;
-            recipient: string;
-            title: string;
-            description: string;
-            issueDate: string;
-            transactionHash: string;
-            blockNumber: number;
-            status: string;
-            verifiedAt: string;
-            certificateId?: undefined;
-            error?: undefined;
-        } | {
-            issuer: string;
-            recipient: string;
-            title: string;
-            description: string;
-            issueDate: string;
-            transactionHash: string;
-            verifiedAt: string;
-            blockNumber?: undefined;
-            status?: undefined;
-            certificateId?: undefined;
-            error?: undefined;
-        } | {
-            issuer: string;
-            recipient: string;
-            title: string;
-            description: string;
-            issueDate: string;
-            verifiedAt: string;
-            certificateId: string;
-            transactionHash?: undefined;
-            blockNumber?: undefined;
-            status?: undefined;
-            error?: undefined;
-        } | {
-            issuer: string;
-            recipient: string;
-            title: string;
-            description: string;
-            issueDate: string;
-            verifiedAt: string;
-            error: any;
-            transactionHash?: undefined;
-            blockNumber?: undefined;
-            status?: undefined;
-            certificateId?: undefined;
-        };
-        error?: undefined;
-    } | {
-        certificate: Certificate;
-        verified: boolean;
-        error: string;
-        blockchainData?: undefined;
-    } | {
-        certificate: Certificate;
-        verified: boolean;
-        blockchainData?: undefined;
-        error?: undefined;
-    }>;
     issueOnBlockchain(certId: number): Promise<{
         success: boolean;
         message: string;
-        certificateId: any;
+        certificateId: number;
         transactionHash: any;
     }>;
+    getAllBlockchainCertificates(): Promise<({
+        id: number;
+        title: string;
+        description: string;
+        issueDate: Date;
+        issuer: {
+            id: string;
+            username: string;
+            blockchainAddress: string;
+        };
+        recipient: {
+            id: string;
+            username: string;
+            blockchainAddress: string;
+        };
+        blockchainTxId: string;
+        blockchainData: {
+            status: string;
+            issueDate: string;
+            title: string;
+            transactionHash: string;
+            blockNumber: number;
+        };
+    } | {
+        blockchainError: any;
+        id: number;
+        title: string;
+        description: string;
+        credentialID: string;
+        issueDate: Date;
+        expiryDate: Date;
+        grade: string;
+        type: string;
+        image: string;
+        blockchainTxId: string;
+        blockchainCertId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        issuerId: string;
+        recipientId: string;
+        issuer: User;
+        blockchainVerified: boolean;
+        recipient: User;
+        blockchainData?: undefined;
+    })[]>;
     getBlockchainCertificate(txId: string): Promise<{
         issuer: string;
         recipient: string;
@@ -136,4 +117,13 @@ export declare class CertificateService {
         status?: undefined;
         certificateId?: undefined;
     }>;
+    verifyCertificate(certIdOrTx: string): Promise<{
+        verified: boolean;
+        data?: undefined;
+    } | {
+        verified: boolean;
+        data: Certificate;
+    }>;
+    findByBlockchainTxId(txId: string): Promise<Certificate | null>;
+    updateCertificate(id: number, updateData: Partial<Certificate>): Promise<Certificate>;
 }

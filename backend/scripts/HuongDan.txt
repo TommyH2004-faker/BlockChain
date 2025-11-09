@@ -1,40 +1,14 @@
-# HƯỚNG DẪN ĐẦY ĐỦ CÀI ĐẶT VÀ SỬ DỤNG BLOCKCHAIN CHO CHỨNG CHỈ
 
-## Các lệnh cơ bản
-// Lấy địa chỉ contract sau khi deploy
-npx hardhat run scripts/deploy-certificate.js --network localhost 
+
 
 // Khởi chạy blockchain local và lấy tài khoản
 npx hardhat node
-
-// Deploy contract và tự động cập nhật địa chỉ
-npx hardhat run scripts/deploy-and-update.js --network localhost
-
-## CÁCH KHẮC PHỤC LỖI "ENS" VÀ CÀI ĐẶT METAMASK
-
-### BƯỚC 1: KHỞI ĐỘNG HARDHAT NODE
-Mở một terminal mới và chạy:
-```bash
-cd D:\BlockChainPJ\backend
-npx hardhat node
-```
-Giữ terminal này chạy và không được đóng lại
-
-### BƯỚC 2: DEPLOY LẠI CONTRACT
-Mở terminal mới và chạy:
-```bash
-cd D:\BlockChainPJ\backend
-npx hardhat run scripts/deploy-and-update.js --network localhost
-```
+// Lấy địa chỉ contract sau khi deploy
+npx hardhat run scripts/deploy-certificate.js --network localhost 
 Lưu ý địa chỉ contract được hiển thị, VD: 0x5FbDB2315678afecb367f032d93F642f64180aa3
 
-### BƯỚC 3: KHỞI ĐỘNG LẠI BACKEND
-```bash
-cd D:\BlockChainPJ\backend
-npm run start:dev
-```
-Đợi backend khởi động hoàn tất và kiểm tra log không có lỗi
 
+Đợi backend khởi động hoàn tất và kiểm tra log không có lỗi
 ### BƯỚC 4: CÀI ĐẶT METAMASK (Để theo dõi giao dịch blockchain)
 1. Cài đặt extension MetaMask cho trình duyệt
 2. Tạo tài khoản mới hoặc import tài khoản cũ
