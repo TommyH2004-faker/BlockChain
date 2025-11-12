@@ -9,7 +9,8 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "test": "jest"
+    "test": "jest",
+    "clean": "rmdir /s /q dist 2>nul & rmdir /s /q artifacts 2>nul & rmdir /s /q cache 2>nul & del /q scripts\\*.js scripts\\*.js.map 2>nul"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -20,6 +21,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@types/multer": "^2.0.0",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.8.0",
     "ethers": "^5.7.2",
     "multer": "^2.0.2",
     "mysql2": "^3.15.1",

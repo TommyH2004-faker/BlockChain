@@ -1,17 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
-
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
 import { SecurityModule } from './modules/security/security.module';
 import { User } from './common/entities/user.entity';
 import { Certificate } from './common/entities/certificate.entity';
-import { DataSource } from 'typeorm/data-source/DataSource';
 import { DebugController } from './debug.controller';
 import { CertificateModule } from './modules/certificates/certificate.module';
 import { UsersModule } from './modules/user/user.module';
-
-
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -29,7 +26,10 @@ import { UsersModule } from './modules/user/user.module';
     AuthModule,
     CertificateModule,
     BlockchainModule,
-    UsersModule
+    UsersModule,
+    UploadModule
+
+
   ],
   controllers: [DebugController],
 })

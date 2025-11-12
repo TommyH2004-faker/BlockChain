@@ -3,12 +3,15 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CertificateService } from './certificate.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Certificate } from '../../common/entities/certificate.entity';
+import { UploadService } from '../../upload/upload.service';
 
 @Controller('certificates')
 export class CertificateController {
   constructor(
-    private readonly certificateService: CertificateService
+    private readonly certificateService: CertificateService,
+    private readonly uploadService: UploadService
   ) {}
+
 
 
 @UseGuards(JwtAuthGuard)
@@ -147,31 +150,91 @@ async createTestCertificate(@Request() req) {
   //     throw new BadRequestException(`Failed to create certificate: ${error.message}`);
   //   }
   // }
-  @UseGuards(JwtAuthGuard)
-@Post()
-async createCertificate(@Request() req, @Body() certificateData: Partial<Certificate>) {
+//   @UseGuards(JwtAuthGuard)
+// @Post()
+// async createCertificate(@Request() req, @Body() certificateData: Partial<Certificate>) {
+//     try {
+//         // Validate required fields
+//         if (!certificateData.title) {
+//             throw new BadRequestException('Title is required');
+//         }
+
+//         if (!certificateData.recipientId) {
+//             throw new BadRequestException('Recipient ID is required');
+//         }
+
+//         // Create certificate with issuer ID from authenticated user
+//         const certificate = await this.certificateService.create({
+//             ...certificateData,
+//             issuerId: req.user.userId
+//         });
+
+//         return certificate;
+//     } catch (error) {
+//         console.error('Create certificate error:', error);
+//         throw new BadRequestException(`Failed to create certificate: ${error.message}`);
+//     }
+// }
+ @UseGuards(JwtAuthGuard)
+  @Post()
+  @UseInterceptors(FileInterceptor('image')) // ✅ THÊM interceptor
+  async createCertificate(
+    @Request() req, 
+    @Body() body: any, // Dùng any vì FormData parse khác
+    @UploadedFile() file: Express.Multer.File // ✅ NHẬN FILE
+  ) {
     try {
-        // Validate required fields
-        if (!certificateData.title) {
-            throw new BadRequestException('Title is required');
-        }
+      console.log('=== CREATE CERTIFICATE ===');
+      console.log('Body:', body);
+      console.log('File:', file ? file.originalname : 'No file');
+      console.log('User:', req.user);
 
-        if (!certificateData.recipientId) {
-            throw new BadRequestException('Recipient ID is required');
-        }
+      // ✅ Parse data từ FormData
+      const certificateData: Partial<Certificate> = {
+        credentialID: body.credentialID,
+        title: body.title,
+        description: body.description,
+        grade: body.grade,
+        type: body.type,
+        issueDate: body.issueDate,
+        recipientId: body.recipientId,
+      };
 
-        // Create certificate with issuer ID from authenticated user
-        const certificate = await this.certificateService.create({
-            ...certificateData,
-            issuerId: req.user.userId
-        });
+      // Validate required fields
+      if (!certificateData.title) {
+        throw new BadRequestException('Title is required');
+      }
+      if (!certificateData.recipientId) {
+        throw new BadRequestException('Recipient ID is required');
+      }
+      if (!certificateData.credentialID) {
+        throw new BadRequestException('Credential ID is required');
+      }
 
-        return certificate;
+      // ✅ Upload ảnh lên Cloudinary nếu có
+      let imageUrl: string | null = null;
+      if (file) {
+        console.log('📤 Uploading image to Cloudinary...');
+        const uploadResult = await this.uploadService.uploadImage(file);
+        imageUrl = uploadResult.secure_url;
+        console.log('✅ Image uploaded:', imageUrl);
+      }
+
+      // ✅ Tạo certificate với imageUrl
+      const certificate = await this.certificateService.create({
+        ...certificateData,
+        image: imageUrl, // Lưu Cloudinary URL
+        issuerId: req.user.userId
+      });
+
+      console.log('✅ Certificate created:', certificate.id);
+      return certificate;
+
     } catch (error) {
-        console.error('Create certificate error:', error);
-        throw new BadRequestException(`Failed to create certificate: ${error.message}`);
+      console.error('❌ Create certificate error:', error);
+      throw new BadRequestException(`Failed to create certificate: ${error.message}`);
     }
-}
+  }
   @Get('blockchain')
     @UseGuards(JwtAuthGuard)
     async getBlockchainCertificates() {

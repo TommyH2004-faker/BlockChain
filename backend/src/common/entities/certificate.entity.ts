@@ -51,7 +51,7 @@ export class Certificate {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'issuerId' })
   issuer: User;
-  @Column()
+  @Column( { default: false })
   blockchainVerified: boolean;
   @ManyToOne(() => User)
   @JoinColumn({ name: 'recipientId' })
