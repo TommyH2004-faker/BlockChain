@@ -391,6 +391,54 @@ async getBlockchainCertificate(txId: string) {
   }
 
   /**
+   * Issue certificate to blockchain (Sepolia) - THIS IS THE REAL BLOCKCHAIN TRANSACTION
+   * @param certId - certificate ID in database
+   * @param recipientAddress - blockchain address of recipient
+   * @param title - certificate title
+   * @param description - certificate description
+   * @param issueDate - issue date
+   * @returns transaction hash from Sepolia blockchain
+   */
+  async issueToBlockchain(
+    certId: number,
+    recipientAddress: string,
+    title: string,
+    description: string,
+    issueDate: string
+  ): Promise<{ transactionHash: string; certificateId?: string }> {
+    try {
+      console.log(`[BLOCKCHAIN] Issuing certificate ${certId} to Sepolia blockchain...`);
+      console.log(`[BLOCKCHAIN] Recipient: ${recipientAddress}, Title: ${title}`);
+
+      // Call blockchain service to issue certificate
+      const result = await this.certificateOnChainService.issueCertificate(
+        recipientAddress,
+        title,
+        description,
+        issueDate
+      );
+
+      console.log(`[BLOCKCHAIN] Certificate issued successfully:`, result);
+
+      // Result can be either a string (transaction hash) or object with transactionHash
+      if (typeof result === 'string') {
+        return { transactionHash: result };
+      } else if (result && result.transactionHash) {
+        return {
+          transactionHash: result.transactionHash,
+          certificateId: result.certificateId
+        };
+      } else {
+        throw new Error('Invalid blockchain response');
+      }
+
+    } catch (error) {
+      console.error(`[BLOCKCHAIN] Error issuing certificate to blockchain:`, error);
+      throw new BadRequestException(`Failed to issue certificate to blockchain: ${error.message}`);
+    }
+  }
+
+  /**
    * Update certificate by id
    * @param id - certificate id
    * @param updateData - partial fields to update

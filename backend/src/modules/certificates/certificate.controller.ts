@@ -468,32 +468,69 @@ async verifyCertificateByTx(@Param('txId') txId: string, @Request() req) {
 
     // 3️⃣ Kiểm tra đã verify chưa
     if (cert.blockchainVerified) {
-      console.log(`[VERIFY] Certificate ID ${cert.id} already verified`);
-      return { certificate: cert, message: 'Certificate has already been verified', verified: true };
+      console.log(`[VERIFY] Certificate ID ${cert.id} already verified on blockchain`);
+      return { 
+        certificate: cert, 
+        message: 'Certificate has already been verified on blockchain', 
+        verified: true,
+        transactionHash: cert.blockchainTxId
+      };
     }
 
-    // 4️⃣ Tính expiryDate = issueDate + 5 năm
-    const issueDate = new Date(cert.issueDate);
-    const expiryDate = new Date(issueDate);
-    expiryDate.setFullYear(issueDate.getFullYear() + 5);
+    // 4️⃣ **ĐYAY LÀ BƯỚC QUAN TRỌNG: ĐẨY LÊN BLOCKCHAIN THẬT**
+    console.log(`[VERIFY] Issuing certificate ID ${cert.id} to Sepolia blockchain...`);
+    
+    const recipientAddress = cert.recipient?.blockchainAddress || '0xb83b1af256f277a697504427c9cb9191b0ec8f71';
+    const issueDate = cert.issueDate ? new Date(cert.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    
+    // Gọi blockchain service để issue certificate
+    const blockchainResult = await this.certificateService.issueToBlockchain(
+      cert.id,
+      recipientAddress,
+      cert.title,
+      cert.description || '',
+      issueDate
+    );
 
-    // 5️⃣ Cập nhật certificate: blockchainVerified và expiryDate
-    cert.blockchainVerified = true;
-    cert.expiryDate = expiryDate; // hoặc tuỳ DB định dạng
+    if (!blockchainResult || !blockchainResult.transactionHash) {
+      throw new InternalServerErrorException('Failed to issue certificate to blockchain');
+    }
+
+    console.log(`[VERIFY] Certificate issued to blockchain with tx: ${blockchainResult.transactionHash}`);
+
+    // 5️⃣ Tính expiryDate = issueDate + 5 năm
+    const issueDateObj = new Date(cert.issueDate);
+    const expiryDate = new Date(issueDateObj);
+    expiryDate.setFullYear(issueDateObj.getFullYear() + 5);
+
+    // 6️⃣ Cập nhật certificate với transaction hash thật và verified
     await this.certificateService.updateCertificate(cert.id, {
       blockchainVerified: true,
-      expiryDate: cert.expiryDate,
+      blockchainTxId: blockchainResult.transactionHash, // Transaction hash thật từ Sepolia
+      expiryDate: expiryDate,
     });
 
-    console.log(`[VERIFY] Certificate ID ${cert.id} verified successfully`);
-    return { certificate: cert, message: 'Certificate successfully verified', verified: true };
+    console.log(`[VERIFY] Certificate ID ${cert.id} verified and saved to blockchain successfully`);
+    
+    return { 
+      certificate: {
+        ...cert,
+        blockchainVerified: true,
+        blockchainTxId: blockchainResult.transactionHash,
+        expiryDate: expiryDate
+      }, 
+      message: 'Certificate successfully issued to Sepolia blockchain', 
+      verified: true,
+      transactionHash: blockchainResult.transactionHash,
+      etherscanUrl: `https://sepolia.etherscan.io/tx/${blockchainResult.transactionHash}`
+    };
 
   } catch (error) {
     console.error(`[VERIFY] Error verifying certificate txId ${txId}:`, error);
     if (error instanceof NotFoundException || error instanceof ForbiddenException) {
       throw error; // pass through known exceptions
     }
-    throw new InternalServerErrorException('Failed to verify certificate');
+    throw new InternalServerErrorException(`Failed to verify certificate: ${error.message}`);
   }
 }
 

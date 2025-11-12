@@ -1,4 +1,8 @@
 
+https://sepolia.etherscan.io/tx/0xdaaa687099a8804942db11a7e7bf7bf9ea4ed274827e60bfedf122c58d4072d4
+
+
+npm run deploy:sepolia
 
 
 // Khởi chạy blockchain local và lấy tài khoản

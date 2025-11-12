@@ -1,1 +1,4 @@
-export const CERTIFICATE_CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+// Certificate contract address for sepolia
+export const CERTIFICATE_CONTRACT_ADDRESS = "0xD8e5B0C6b1038E34696B4F37F3658F46c4319916";
+export const NETWORK_NAME = "sepolia";
+export const CHAIN_ID = 11155111;

@@ -1,7 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 import { CERTIFICATE_CONTRACT_ADDRESS } from './certificate.address';
-import * as contractJson from '../../../artifacts/contracts/Certificate.sol/Certificate.json';
+import * as fs from 'fs';
+import * as path from 'path';
+
+let contractJson: any;
+try {
+  const artifactPath = path.join(__dirname, '../../../artifacts/contracts/Certificate.sol/Certificate.json');
+  const raw = fs.readFileSync(artifactPath, 'utf8');
+  contractJson = JSON.parse(raw);
+} catch (e) {
+  console.warn('Could not load contract artifact JSON at ../../../artifacts/contracts/Certificate.sol/Certificate.json - falling back to minimal ABI. Error:', e && e.message ? e.message : e);
+  // Minimal ABI covering the functions/events used in this service to allow runtime operation/tests
+  contractJson = {
+    abi: [
+      // issueCertificate(address,string,string,string) -> returns uint256 or emits event
+      "function issueCertificate(address,string,string,string) returns (uint256)",
+      // getCertificate(uint256) view returns (issuer, recipient, title, description, issueDate)
+      "function getCertificate(uint256) view returns (address,address,string,string,string)",
+      // CertificateIssued event
+      "event CertificateIssued(uint256 indexed certId, address indexed recipient)"
+    ]
+  };
+}
 
 @Injectable()
 export class CertificateOnChainService {
@@ -21,21 +42,51 @@ export class CertificateOnChainService {
     try {
       console.log('Initializing blockchain service...');
       
-      // Sử dụng StaticJsonRpcProvider để tránh ENS lookup
+      // Determine which network to use based on environment
+      const currentNetwork = process.env.USE_SEPOLIA === 'true' ? 'sepolia' : 
+                             process.env.NODE_ENV === 'production' ? 'sepolia' : 'hardhat';
+      console.log('Current network mode:', currentNetwork);
+      
+      let rpcUrl: string;
+      let privateKey: string;
+      let chainId: number;
+      
+      if (currentNetwork === 'sepolia') {
+        rpcUrl = process.env.SEPOLIA_RPC_URL || 'https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID';
+        privateKey = process.env.SEPOLIA_PRIVATE_KEY || '';
+        chainId = 11155111;
+        
+        if (!process.env.SEPOLIA_RPC_URL || !process.env.SEPOLIA_PRIVATE_KEY) {
+          throw new Error('SEPOLIA_RPC_URL and SEPOLIA_PRIVATE_KEY must be set in .env file for production mode');
+        }
+      } else {
+        // Hardhat local for development
+        rpcUrl = 'http://127.0.0.1:8545';
+        privateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+        chainId = 31337;
+      }
+      
+      console.log('Using RPC:', rpcUrl);
+      console.log('Chain ID:', chainId);
+      
+      // Initialize provider
       this.provider = new ethers.providers.StaticJsonRpcProvider(
-        'http://127.0.0.1:8545',
+        rpcUrl,
         {
-          name: 'localhost',
-          chainId: 31337
+          name: currentNetwork === 'sepolia' ? 'sepolia' : 'localhost',
+          chainId: chainId
         }
       );
 
-      // Hardcode contract address to ensure it's correct
+      // Get contract address for current network
       const contractAddress = CERTIFICATE_CONTRACT_ADDRESS;
       console.log('Using contract address:', contractAddress);
 
-      // Khởi tạo signer với private key
-      const privateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+      if (!contractAddress || contractAddress.toLowerCase() === "0x0000000000000000000000000000000000000000") {
+        throw new Error(`Contract not deployed on ${currentNetwork}. Please deploy first.`);
+      }
+
+      // Initialize signer with private key
       this.signer = new ethers.Wallet(privateKey).connect(this.provider);
       console.log('Signer address:', this.signer.address);
 

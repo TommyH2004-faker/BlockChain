@@ -10,7 +10,11 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "test": "jest",
-    "clean": "rmdir /s /q dist 2>nul & rmdir /s /q artifacts 2>nul & rmdir /s /q cache 2>nul & del /q scripts\\*.js scripts\\*.js.map 2>nul"
+    "clean": "rmdir /s /q dist 2>nul & rmdir /s /q artifacts 2>nul & rmdir /s /q cache 2>nul & del /q scripts\\*.js scripts\\*.js.map 2>nul",
+    "compile": "npx hardhat compile",
+    "deploy:sepolia": "npx hardhat run scripts/deploy-sepolia.js --network sepolia",
+    "deploy:local": "npx hardhat run scripts/deploy-certificate.mjs --network localhost",
+    "verify": "npx hardhat verify --network sepolia"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
